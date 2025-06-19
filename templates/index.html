@@ -3,35 +3,64 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ask EVA - HDFC Chatbot</title>
+  <title>HDFC EVA Chatbot</title>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <div class="chat-widget">
+  <!-- Launcher Icon -->
+  <div class="bot-launcher" id="bot-launcher" onclick="toggleChat()">
+    <img src="/static/hdfc.jpg" alt="Launch EVA" />
+  </div>
+
+  <!-- Chat Widget -->
+  <div class="chat-box" id="chat-box">
     <div class="chat-header">
-      <img src="static/hdfc.jpg" alt="HDFC" class="hdfc-logo"/>
+      <img src="static/hdfc.jpg" alt="HDFC" class="hdfc-logo" style="width: 45px; height: 45px;" />
       <span class="chat-title">Ask EVA</span>
+      <button onclick="toggleChat()">✖</button>
     </div>
 
-    <div class="chat-body" id="chat-box">
-      {% if query and response %}
-        <div class="chat-message user-message">
-          <p>{{ query }}</p>
-        </div>
-        <div class="chat-message bot-message">
-          <p>{{ response }}</p>
-        </div>
+    <div class="chat-messages" id="chat-messages">
+      {% if chat_history %}
+        {% for msg in chat_history %}
+          <div class="message user"><p>{{ msg.query }}</p></div>
+          <div class="message bot"><p>{{ msg.response }}</p></div>
+        {% endfor %}
       {% else %}
-        <div class="chat-message bot-message">
-          <p>Hi! 👋 I'm EVA, your HDFC virtual assistant. How can I help you with credit cards today?</p>
+        <div class="message bot">
+          <p>Hi! 👋 I'm EVA, your HDFC virtual assistant. Ask me anything about credit cards!</p>
         </div>
       {% endif %}
     </div>
 
-    <form method="post" class="chat-input-form">
-      <input name="user_query" type="text" placeholder="Type your question here..." required />
+    <form method="post" class="chat-input">
+      <input type="text" name="user_query" placeholder="Type here..." required />
       <button type="submit">➤</button>
     </form>
   </div>
+
+  <!-- Chat Toggle & Auto-Open -->
+  <script>
+    function toggleChat() {
+      const chatBox = document.getElementById("chat-box");
+      const launcher = document.getElementById("bot-launcher");
+
+      chatBox.classList.toggle("open");
+
+      // Toggle launcher visibility
+      if (chatBox.classList.contains("open")) {
+        launcher.style.display = "none";
+      } else {
+        launcher.style.display = "flex";
+      }
+    }
+
+    {% if open_chat %}
+      window.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("chat-box").classList.add("open");
+        document.getElementById("bot-launcher").style.display = "none";
+      });
+    {% endif %}
+  </script>
 </body>
 </html>
