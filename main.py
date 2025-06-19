@@ -9,6 +9,7 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGener
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableMap
+from datetime import datetime
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -26,7 +27,11 @@ vector_store = FAISS.load_local("faiss_index_hdfc_google_emb", embeddings, allow
 prompt = PromptTemplate(
     input_variables=["context", "question"],
     template="""
-You are an expert financial analyst for HDFC Bank. Your task is to provide accurate and concise answers based on the given context.
+You are EVA, a helpful and friendly virtual assistant for HDFC Bank.
+
+Your job is to answer customer queries about HDFC credit cards and banking services. If the user says hello or makes small talk, respond politely and stay on brand.
+
+Only provide recommendations based on the context provided.
 
 CONTEXT:
 {context}
@@ -34,9 +39,10 @@ CONTEXT:
 QUESTION:
 {question}
 
-Answer the question based *only* on the provided context. If the information is not in the context, state that you "don't have enough information from the provided documents." Do not make up information.
+Answer the question based only on the provided context. If the information is not in the context, say "I don’t have enough information from the documents." Never make things up.
 """
 )
+
 
 # Define the model and RAG pipeline
 model = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.3)
@@ -58,16 +64,27 @@ async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "response": None})
 
 # Route: Handle form submission
+current_time = datetime.now().strftime("%I:%M %p")
+
+from datetime import datetime
+
 chat_history = []
 
 @app.post("/", response_class=HTMLResponse)
 async def query(request: Request, user_query: str = Form(...)):
     docs = vector_store.similarity_search(user_query, k=5)
     answer = rag_chain.invoke({"input_documents": docs, "question": user_query})
-    chat_history.append({"query": user_query, "response": answer})
+
+    current_time = datetime.now().strftime("%I:%M %p")  # 12-hour format
+
+    chat_history.append({
+        "query": user_query,
+        "response": answer,
+        "time": current_time
+    })
+
     return templates.TemplateResponse("index.html", {
         "request": request,
         "chat_history": chat_history,
         "open_chat": True
     })
-

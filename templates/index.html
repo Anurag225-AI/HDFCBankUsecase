@@ -15,21 +15,26 @@
   <!-- Chat Widget -->
   <div class="chat-box" id="chat-box">
     <div class="chat-header">
-      <img src="static/hdfc.jpg" alt="HDFC" class="hdfc-logo" style="width: 45px; height: 45px;" />
+      <img src="/static/hdfc.jpg" alt="HDFC" class="hdfc-logo" style="width: 40px; height: 40px;" />
       <span class="chat-title">Ask EVA</span>
       <button onclick="toggleChat()">✖</button>
     </div>
 
     <div class="chat-messages" id="chat-messages">
+      <!-- Dynamic greeting injected via JS -->
+      <div class="message bot" id="greeting-message"></div>
+
       {% if chat_history %}
         {% for msg in chat_history %}
-          <div class="message user"><p>{{ msg.query }}</p></div>
-          <div class="message bot"><p>{{ msg.response }}</p></div>
+          <div class="message user">
+            <p>{{ msg.query }}</p>
+            <span class="chat-time">{{ msg.time }}</span>
+          </div>
+          <div class="message bot">
+            <p>{{ msg.response }}</p>
+            <span class="chat-time">{{ msg.time }}</span>
+          </div>
         {% endfor %}
-      {% else %}
-        <div class="message bot">
-          <p>Hi! 👋 I'm EVA, your HDFC virtual assistant. Ask me anything about credit cards!</p>
-        </div>
       {% endif %}
     </div>
 
@@ -39,7 +44,7 @@
     </form>
   </div>
 
-  <!-- Chat Toggle & Auto-Open -->
+  <!-- Chat Logic -->
   <script>
     function toggleChat() {
       const chatBox = document.getElementById("chat-box");
@@ -47,7 +52,6 @@
 
       chatBox.classList.toggle("open");
 
-      // Toggle launcher visibility
       if (chatBox.classList.contains("open")) {
         launcher.style.display = "none";
       } else {
@@ -61,6 +65,32 @@
         document.getElementById("bot-launcher").style.display = "none";
       });
     {% endif %}
+
+    // Show dynamic greeting
+    const currentTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+    const hours = new Date(currentTime).getHours();
+
+    function getGreeting() {
+      if (hours >= 0 && hours < 12) {
+        return "Good morning";
+      } else if (hours >= 12 && hours < 17) {
+        return "Good afternoon";
+      } else {
+        return "Good evening";
+      }
+    }
+
+    const greeting = getGreeting();
+    const greetingElement = document.getElementById("greeting-message");
+
+    const nowTime = new Date().toLocaleTimeString('en-US', {
+      hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata'
+    });
+
+    greetingElement.innerHTML = `
+      <p>👋 Hi ${greeting}, I'm EVA, your HDFC virtual assistant. Ask me anything about credit cards!</p>
+      <span class="chat-time">${nowTime}</span>
+    `;
   </script>
 </body>
 </html>
