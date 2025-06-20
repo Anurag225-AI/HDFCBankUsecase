@@ -135,4 +135,25 @@ body {
   color: #d32f2f;
   transform: scale(1.2);
 }
+.chat-buttons {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chat-buttons button {
+  background-color: #004ba0;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.chat-buttons button:hover {
+  background-color: #003974;
+}
 

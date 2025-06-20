@@ -5,29 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>HDFC EVA Chatbot</title>
   <link rel="stylesheet" href="/static/style.css" />
-  <style>
-    .feedback {
-      margin-top: 4px;
-      font-size: 18px;
-      color: #888;
-      display: flex;
-      gap: 10px;
-      cursor: pointer;
-    }
-
-    .feedback span:hover {
-      color: #d32f2f;
-      transform: scale(1.2);
-    }
-
-    .feedback span.disabled {
-      pointer-events: none;
-      opacity: 0.6;
-    }
-  </style>
 </head>
 <body>
-  <!-- Floating Launcher Icon -->
+
+  <!-- Floating Launcher -->
   <div class="bot-launcher" id="bot-launcher" onclick="toggleChat()">
     <img src="/static/hdfc.jpg" alt="Launch EVA" />
   </div>
@@ -35,13 +16,19 @@
   <!-- Chat Box -->
   <div class="chat-box" id="chat-box">
     <div class="chat-header">
-      <img src="/static/hdfc.jpg" alt="HDFC" class="hdfc-logo" style="width: 40px; height: 40px;" />
-      <span class="chat-title">Ask EVA</span>
-      <button onclick="toggleChat()">✖</button>
-    </div>
+  <img src="static/hdfc.jpg" alt="HDFC" class="hdfc-logo" style="width: 45px; height: 45px;" />
+  <span class="chat-title">Ask EVA</span>
+
+  <!-- Reload and Close buttons -->
+  <div class="chat-actions">
+    <button onclick="resetChat()" title="Restart Chat">🔄</button>
+    <button onclick="toggleChat()" title="Close">✖</button>
+  </div>
+</div>
+
 
     <div class="chat-messages" id="chat-messages">
-      <!-- Dynamic greeting -->
+      <!-- Dynamic Greeting -->
       <div class="message bot" id="greeting-message"></div>
 
       {% if chat_history %}
@@ -50,36 +37,42 @@
             <p>{{ msg.query }}</p>
             <span class="chat-time">{{ msg.time }}</span>
           </div>
+
           <div class="message bot">
             <p>{{ msg.response | safe }}</p>
             <span class="chat-time">{{ msg.time }}</span>
-            <div class="feedback">
-              <span onclick="handleFeedback(this, 'up')">👍</span>
-              <span onclick="handleFeedback(this, 'down')">👎</span>
-            </div>
+
+            {% if loop.last and msg.step == 'confirm' %}
+              <div class="chat-buttons">
+                <button onclick="sendGuidedResponse('Yes')">✅ Yes</button>
+                <button onclick="sendGuidedResponse('No')">❌ No</button>
+              </div>
+            {% elif loop.last and msg.step == 'employment' %}
+              <div class="chat-buttons">
+                <button onclick="sendGuidedResponse('Salaried')">👔 Salaried</button>
+                <button onclick="sendGuidedResponse('Self-Employed')">🏢 Self-Employed</button>
+              </div>
+            {% endif %}
           </div>
         {% endfor %}
       {% endif %}
     </div>
 
-    <form method="post" class="chat-input">
-      <input type="text" name="user_query" placeholder="Type your message..." required />
+    <form method="post" class="chat-input" onsubmit="return handleSubmit(event)">
+      <input id="chat-input-box" type="text" name="user_query" placeholder="Type your message..." required />
       <button type="submit">➤</button>
     </form>
   </div>
 
   <!-- Scripts -->
   <script>
-    // Toggle Chatbox Open/Close
     function toggleChat() {
       const chatBox = document.getElementById("chat-box");
       const launcher = document.getElementById("bot-launcher");
       const isOpen = chatBox.classList.toggle("open");
-
       launcher.style.display = isOpen ? "none" : "flex";
     }
 
-    // Auto-open chat after form submit
     {% if open_chat %}
       window.addEventListener("DOMContentLoaded", function () {
         document.getElementById("chat-box").classList.add("open");
@@ -87,26 +80,68 @@
       });
     {% endif %}
 
-    // Greeting Message (Dynamic)
+    // Greeting
     const hours = new Date().getHours();
     const greeting = hours < 12 ? "Good morning" : hours < 17 ? "Good afternoon" : "Good evening";
     const timeNow = new Date().toLocaleTimeString("en-US", {
       hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata'
     });
 
-    const greetingMessage = `
+    const greetingElement = document.getElementById("greeting-message");
+    greetingElement.innerHTML = `
       <p>👋 Hi ${greeting}, I'm EVA, your HDFC virtual assistant. Ask me anything about credit cards!</p>
+      <div class="chat-buttons">
+        <button onclick="sendGuidedResponse('I want to check my eligibility for Credit card')">✅ I want to check my eligibility for Credit card</button>
+        <button onclick="sendGuidedResponse('I want to know more about Credit card and HDFC services')">📘 I want to know more about Credit card and HDFC services</button>
+      </div>
       <span class="chat-time">${timeNow}</span>
     `;
-    document.getElementById("greeting-message").innerHTML = greetingMessage;
 
-    // Feedback Button Logic
-    function handleFeedback(el, type) {
-      el.classList.add("disabled");
-      el.innerText = type === 'up' ? '👍 Thank you!' : '👎 Feedback noted';
-      const siblings = el.parentElement.querySelectorAll("span");
-      siblings.forEach(s => s.classList.add("disabled"));
+    // Button Input Filler
+    function sendGuidedResponse(text) {
+      const input = document.getElementById("chat-input-box");
+      input.value = text;
+      input.form.submit();
     }
+
+    function handleSubmit(event) {
+      const input = document.getElementById("chat-input-box");
+      if (!input.value.trim()) return false;
+      return true;
+    }
+
+    // Handle DOB Input Type Switch
+    const chatMessages = document.getElementById("chat-messages");
+    const lastBotMsg = chatMessages?.querySelector(".message.bot:last-of-type p")?.innerText || "";
+    const input = document.getElementById("chat-input-box");
+    if (lastBotMsg.toLowerCase().includes("enter your date of birth")) {
+      input.type = "date";
+      input.max = new Date().toISOString().split("T")[0];
+      input.placeholder = "Select your DOB";
+      input.addEventListener("change", function () {
+        const date = new Date(this.value);
+        const formatted = date.toLocaleDateString("en-GB").split("/").join("-");
+        this.type = "text";  // switch back
+        this.value = formatted;
+        this.form.submit();
+      }, { once: true });
+    } else {
+      input.type = "text";
+      input.removeAttribute("max");
+      input.placeholder = "Type your message...";
+    }
+    function resetChat() {
+  fetch("/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: new URLSearchParams({ user_query: "__reset__" })  // special flag
+  }).then(() => {
+    location.reload(); // Reload page to clear chat
+  });
+}
+
   </script>
 </body>
 </html>

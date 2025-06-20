@@ -7,3 +7,4 @@ google-generativeai
 faiss-cpu
 langchain-community
 langchain-cli
+pandas
