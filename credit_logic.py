@@ -5,7 +5,7 @@ import pandas as pd
 import re
 
 # === CONFIG ===
-GEMINI_API_KEY = "AIzaSyBJLgcXQBIjSjAyU2nzjCHeQ1V7GLxeCoo"
+GEMINI_API_KEY = "AIzaSyAVwoZmGiYvSj8sbD2wOAvjI3f1crjT9hU"
 genai.configure(api_key=GEMINI_API_KEY)
 
 # === LOAD CSV ===
@@ -13,7 +13,7 @@ df = pd.read_csv("HDFC Bank Eligibility Doc(Credit Card Details).csv", encoding=
 df.columns = df.columns.str.strip()
 
 # === GEMINI MODEL ===
-model = genai.GenerativeModel("gemini-1.5-pro")
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 def recommend_credit_card(user_input: str) -> str:
     """
