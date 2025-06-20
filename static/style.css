@@ -122,3 +122,17 @@ body {
   margin-top: 4px;
 }
 
+.feedback {
+  margin-top: 4px;
+  font-size: 18px;
+  color: #888;
+  display: flex;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.feedback span:hover {
+  color: #d32f2f;
+  transform: scale(1.2);
+}
+

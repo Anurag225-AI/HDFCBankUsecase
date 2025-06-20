@@ -5,14 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>HDFC EVA Chatbot</title>
   <link rel="stylesheet" href="/static/style.css" />
+  <style>
+    .feedback {
+      margin-top: 4px;
+      font-size: 18px;
+      color: #888;
+      display: flex;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .feedback span:hover {
+      color: #d32f2f;
+      transform: scale(1.2);
+    }
+
+    .feedback span.disabled {
+      pointer-events: none;
+      opacity: 0.6;
+    }
+  </style>
 </head>
 <body>
-  <!-- Launcher Icon -->
+  <!-- Floating Launcher Icon -->
   <div class="bot-launcher" id="bot-launcher" onclick="toggleChat()">
     <img src="/static/hdfc.jpg" alt="Launch EVA" />
   </div>
 
-  <!-- Chat Widget -->
+  <!-- Chat Box -->
   <div class="chat-box" id="chat-box">
     <div class="chat-header">
       <img src="/static/hdfc.jpg" alt="HDFC" class="hdfc-logo" style="width: 40px; height: 40px;" />
@@ -21,7 +41,7 @@
     </div>
 
     <div class="chat-messages" id="chat-messages">
-      <!-- Dynamic greeting injected via JS -->
+      <!-- Dynamic greeting -->
       <div class="message bot" id="greeting-message"></div>
 
       {% if chat_history %}
@@ -31,34 +51,35 @@
             <span class="chat-time">{{ msg.time }}</span>
           </div>
           <div class="message bot">
-            <p>{{ msg.response }}</p>
+            <p>{{ msg.response | safe }}</p>
             <span class="chat-time">{{ msg.time }}</span>
+            <div class="feedback">
+              <span onclick="handleFeedback(this, 'up')">👍</span>
+              <span onclick="handleFeedback(this, 'down')">👎</span>
+            </div>
           </div>
         {% endfor %}
       {% endif %}
     </div>
 
     <form method="post" class="chat-input">
-      <input type="text" name="user_query" placeholder="Type here..." required />
+      <input type="text" name="user_query" placeholder="Type your message..." required />
       <button type="submit">➤</button>
     </form>
   </div>
 
-  <!-- Chat Logic -->
+  <!-- Scripts -->
   <script>
+    // Toggle Chatbox Open/Close
     function toggleChat() {
       const chatBox = document.getElementById("chat-box");
       const launcher = document.getElementById("bot-launcher");
+      const isOpen = chatBox.classList.toggle("open");
 
-      chatBox.classList.toggle("open");
-
-      if (chatBox.classList.contains("open")) {
-        launcher.style.display = "none";
-      } else {
-        launcher.style.display = "flex";
-      }
+      launcher.style.display = isOpen ? "none" : "flex";
     }
 
+    // Auto-open chat after form submit
     {% if open_chat %}
       window.addEventListener("DOMContentLoaded", function () {
         document.getElementById("chat-box").classList.add("open");
@@ -66,31 +87,26 @@
       });
     {% endif %}
 
-    // Show dynamic greeting
-    const currentTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
-    const hours = new Date(currentTime).getHours();
-
-    function getGreeting() {
-      if (hours >= 0 && hours < 12) {
-        return "Good morning";
-      } else if (hours >= 12 && hours < 17) {
-        return "Good afternoon";
-      } else {
-        return "Good evening";
-      }
-    }
-
-    const greeting = getGreeting();
-    const greetingElement = document.getElementById("greeting-message");
-
-    const nowTime = new Date().toLocaleTimeString('en-US', {
+    // Greeting Message (Dynamic)
+    const hours = new Date().getHours();
+    const greeting = hours < 12 ? "Good morning" : hours < 17 ? "Good afternoon" : "Good evening";
+    const timeNow = new Date().toLocaleTimeString("en-US", {
       hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata'
     });
 
-    greetingElement.innerHTML = `
+    const greetingMessage = `
       <p>👋 Hi ${greeting}, I'm EVA, your HDFC virtual assistant. Ask me anything about credit cards!</p>
-      <span class="chat-time">${nowTime}</span>
+      <span class="chat-time">${timeNow}</span>
     `;
+    document.getElementById("greeting-message").innerHTML = greetingMessage;
+
+    // Feedback Button Logic
+    function handleFeedback(el, type) {
+      el.classList.add("disabled");
+      el.innerText = type === 'up' ? '👍 Thank you!' : '👎 Feedback noted';
+      const siblings = el.parentElement.querySelectorAll("span");
+      siblings.forEach(s => s.classList.add("disabled"));
+    }
   </script>
 </body>
 </html>
