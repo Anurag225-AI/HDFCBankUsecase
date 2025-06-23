@@ -1,51 +1,59 @@
-# credit_logic.py
-
-import google.generativeai as genai
-import pandas as pd
+import os
 import re
+import pandas as pd
+import google.generativeai as genai
+from dotenv import load_dotenv
 
-# === CONFIG ===
-GEMINI_API_KEY = "AIzaSyAVwoZmGiYvSj8sbD2wOAvjI3f1crjT9hU"
-genai.configure(api_key=GEMINI_API_KEY)
+# === Load Environment Variables ===
+load_dotenv()
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-# === LOAD CSV ===
+# ✅ Explicitly configure Gemini API
+if not GOOGLE_API_KEY:
+    raise ValueError("GOOGLE_API_KEY not found in environment. Please check your .env file.")
+genai.configure(api_key=GOOGLE_API_KEY)
+
+# === Load Credit Card Dataset ===
 df = pd.read_csv("HDFC Bank Eligibility Doc(Credit Card Details).csv", encoding="latin1")
 df.columns = df.columns.str.strip()
 
-# === GEMINI MODEL ===
+# === Initialize Gemini Model ===
 model = genai.GenerativeModel("gemini-1.5-flash")
+
 
 def recommend_credit_card(user_input: str) -> str:
     """
-    Extracts employment type, age, income from the user's sentence
-    and filters the credit card CSV to recommend matching cards.
+    Extracts employment type, age, and income from the user message
+    and recommends HDFC credit cards based on eligibility criteria.
     """
 
-    # Intent Classification Prompt
+    # -- Step 1: Intent Classification --
     intent_prompt = f"""
 You are a helpful assistant for HDFC Bank credit card eligibility.
 
-Classify user message as:
+Classify the user message as:
 - 'eligibility_query' → if it contains info about employment type, age, income
 - 'other' → if not about HDFC Credit Card eligibility
 
 User: {user_input}
 Reply ONLY with: eligibility_query or other
 """
-
     intent_response = model.generate_content(intent_prompt)
     intent = intent_response.text.strip().lower()
 
     if intent != "eligibility_query":
-        return "❌ I can help you only with HDFC Credit Card eligibility queries. Please provide your age, employment type, and income."
+        return (
+            "I can help you only with HDFC Credit Card eligibility queries.\n"
+            "Please provide your **age**, **employment type** (salaried or self-employed), and **income**."
+        )
 
-    # Extraction Prompt
+    # -- Step 2: Extract Fields (employment_type, age, income) --
     extract_prompt = f"""
-Extract these fields from user message:
+Extract these fields from the user message:
 
 1. employment_type: 'salaried' or 'self-employed'
 2. age: integer
-3. income: numeric (in rupees per month for salaried, per annum ITR for self-employed)
+3. income: numeric (monthly for salaried, annual ITR for self-employed)
 
 Convert lakhs/crores into rupees (e.g., '12 lakh' → 1200000).
 
@@ -56,7 +64,6 @@ income: <value>
 
 User: {user_input}
 """
-
     extract_response = model.generate_content(extract_prompt)
     extracted = extract_response.text.strip()
 
@@ -65,15 +72,17 @@ User: {user_input}
     income_match = re.search(r'income:\s*([\d,\.]+)', extracted)
 
     if not (emp_match and age_match and income_match):
-        return "❌ Could not extract required details. Please provide age, employment type, and income clearly."
+        return (
+            "I couldn't extract all required fields.\n"
+            "Please mention your age, employment type (salaried/self-employed), and income clearly."
+        )
 
-    # Extracted Values
+    # -- Step 3: Parse Extracted Fields --
     employment_type = emp_match.group(1).strip().lower()
     age = int(age_match.group(1).strip())
-    income_str = income_match.group(1).replace(",", "").strip()
-    income = float(income_str)
+    income = float(income_match.group(1).replace(",", "").strip())
 
-    # Filter cards
+    # -- Step 4: Filter Based on Employment Type --
     if employment_type == "salaried":
         filtered = df[
             (df['Employment Type Salaried'].str.lower() == 'yes') &
@@ -89,11 +98,14 @@ User: {user_input}
             (df['Minimum ITR for Self Employeed Person per annum in Rupees'].astype(float) <= income)
         ]
     else:
-        return "❌ Invalid employment type detected."
+        return "Invalid employment type detected. Please specify as either 'salaried' or 'self-employed'."
 
+    # -- Step 5: Respond Based on Filter Result --
     if filtered.empty:
-        return "❌ Sorry, you are not eligible for any credit cards based on your details."
+        return "Sorry! You are not eligible for any HDFC credit cards based on the provided details."
 
-    # Return eligible cards
+    # Eligible Cards List
     cards = filtered["Card Name"].dropna().unique().tolist()
-    return "🎉 Based on your profile, you're eligible for the following HDFC Credit Cards:\n\n" + "\n".join(f"- {card}" for card in cards)
+    card_list = "\n".join(f"- {card}" for card in cards)
+    card_list_html = "<br>".join(f"• {card}" for card in cards)
+    return f"Based on your profile, you're eligible for the following HDFC Credit Cards:<br><br>{card_list_html}"

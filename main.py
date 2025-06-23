@@ -23,7 +23,7 @@ templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Set Google API Key securely
-os.environ["GOOGLE_API_KEY"] = "AIzaSyAVwoZmGiYvSj8sbD2wOAvjI3f1crjT9hU"
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # Load FAISS vector index
 embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")

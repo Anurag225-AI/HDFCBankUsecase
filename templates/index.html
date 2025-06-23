@@ -5,8 +5,47 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>HDFC EVA Chatbot</title>
   <link rel="stylesheet" href="/static/style.css" />
+  <style>
+    body {
+      background-image: url("static/HDFC.png");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+    }
+
+    .nav-links {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 1002;
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 8px 12px;
+      border-radius: 8px;
+      display: flex;
+      gap: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: #004ba0;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .nav-links a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
+
+  <!-- Navigation Links -->
+  <div class="nav-links">
+    <a href="https://www.hdfcbank.com/" target="_blank">🏠 HOME</a>
+    <a href="https://www.hdfcbank.com/personal/pay/cards" target="_blank">💳 Cards</a>
+  </div>
 
   <!-- Floating Launcher -->
   <div class="bot-launcher" id="bot-launcher" onclick="toggleChat()">
@@ -16,19 +55,15 @@
   <!-- Chat Box -->
   <div class="chat-box" id="chat-box">
     <div class="chat-header">
-  <img src="static/hdfc.jpg" alt="HDFC" class="hdfc-logo" style="width: 45px; height: 45px;" />
-  <span class="chat-title">Ask EVA</span>
-
-  <!-- Reload and Close buttons -->
-  <div class="chat-actions">
-    <button onclick="resetChat()" title="Restart Chat">🔄</button>
-    <button onclick="toggleChat()" title="Close">✖</button>
-  </div>
-</div>
-
+      <img src="/static/hdfc.jpg" alt="HDFC" class="hdfc-logo" style="width: 45px; height: 45px;" />
+      <span class="chat-title">Ask EVA</span>
+      <div class="chat-actions">
+        <button onclick="resetChat()" title="Restart Chat">🔄</button>
+        <button onclick="toggleChat()" title="Close">✖</button>
+      </div>
+    </div>
 
     <div class="chat-messages" id="chat-messages">
-      <!-- Dynamic Greeting -->
       <div class="message bot" id="greeting-message"></div>
 
       {% if chat_history %}
@@ -37,11 +72,9 @@
             <p>{{ msg.query }}</p>
             <span class="chat-time">{{ msg.time }}</span>
           </div>
-
           <div class="message bot">
             <p>{{ msg.response | safe }}</p>
             <span class="chat-time">{{ msg.time }}</span>
-
             {% if loop.last and msg.step == 'confirm' %}
               <div class="chat-buttons">
                 <button onclick="sendGuidedResponse('Yes')">✅ Yes</button>
@@ -80,15 +113,13 @@
       });
     {% endif %}
 
-    // Greeting
     const hours = new Date().getHours();
     const greeting = hours < 12 ? "Good morning" : hours < 17 ? "Good afternoon" : "Good evening";
-    const timeNow = new Date().toLocaleTimeString("en-US", {
+    const timeNow = new Date().toLocaleTimeString("en-IN", {
       hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata'
     });
 
-    const greetingElement = document.getElementById("greeting-message");
-    greetingElement.innerHTML = `
+    document.getElementById("greeting-message").innerHTML = `
       <p>👋 Hi ${greeting}, I'm EVA, your HDFC virtual assistant. Ask me anything about credit cards!</p>
       <div class="chat-buttons">
         <button onclick="sendGuidedResponse('I want to check my eligibility for Credit card')">✅ I want to check my eligibility for Credit card</button>
@@ -97,7 +128,6 @@
       <span class="chat-time">${timeNow}</span>
     `;
 
-    // Button Input Filler
     function sendGuidedResponse(text) {
       const input = document.getElementById("chat-input-box");
       input.value = text;
@@ -110,7 +140,7 @@
       return true;
     }
 
-    // Handle DOB Input Type Switch
+    // Handle DOB
     const chatMessages = document.getElementById("chat-messages");
     const lastBotMsg = chatMessages?.querySelector(".message.bot:last-of-type p")?.innerText || "";
     const input = document.getElementById("chat-input-box");
@@ -121,27 +151,25 @@
       input.addEventListener("change", function () {
         const date = new Date(this.value);
         const formatted = date.toLocaleDateString("en-GB").split("/").join("-");
-        this.type = "text";  // switch back
+        this.type = "text";
         this.value = formatted;
         this.form.submit();
       }, { once: true });
-    } else {
-      input.type = "text";
-      input.removeAttribute("max");
-      input.placeholder = "Type your message...";
     }
-    function resetChat() {
-  fetch("/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body: new URLSearchParams({ user_query: "__reset__" })  // special flag
-  }).then(() => {
-    location.reload(); // Reload page to clear chat
-  });
-}
 
+    // Reset Chat
+    function resetChat() {
+      fetch("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ user_query: "__reset__" })
+      }).then(() => location.reload());
+    }
+
+    // Scroll to bottom
+    const scrollDiv = document.getElementById("chat-messages");
+    const scrollToBottom = () => scrollDiv.scrollTop = scrollDiv.scrollHeight;
+    scrollToBottom();
   </script>
 </body>
 </html>

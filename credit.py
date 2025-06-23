@@ -33,7 +33,10 @@ def process_credit_flow(user_input: str):
         res = requests.get(f"https://hdfcbankusecase.onrender.com/profile?phone={user_input}")
         if res.status_code == 404:
             reset_flow()
-            return "❌ Your phone number is not verified. Visit: https://www.hdfcbank.com/", "done"
+            return ("Dear User, We are unable to find your profile with your phone number in our HDFC Database. "
+    'Please feel free to visit our website for credit card related services: '
+    '<a href="https://www.hdfcbank.com/" target="_blank">https://www.hdfcbank.com/</a>',
+    "done")
         state["step"] = "pan"
         return "✅ Phone verified. Now, please enter your PAN number (e.g., ABCDE1234F).", "pan"
 
@@ -42,8 +45,11 @@ def process_credit_flow(user_input: str):
             state["retries"] += 1
             if state["retries"] >= 3:
                 reset_flow()
-                return "❌ Too many invalid PAN attempts. Visit: https://www.hdfcbank.com/", "done"
-            return "❌ Invalid PAN format. Please try again (e.g., ABCDE1234F).", "pan"
+                return ("Dear User, You have entered the wrong PAN number. "
+    'Please feel free to visit our website for credit card related services: '
+    '<a href="https://www.hdfcbank.com/" target="_blank">https://www.hdfcbank.com/</a>',
+    "done")
+            return "Dear User, You have provided PAN number in invalid format. Please provide your PAN Number again (e.g., ABCDE1234F).", "pan"
         state["data"]["pan"] = user_input
         state["step"] = "dob"
         state["retries"] = 0
@@ -54,28 +60,39 @@ def process_credit_flow(user_input: str):
             state["retries"] += 1
             if state["retries"] >= 3:
                 reset_flow()
-                return "❌ Too many invalid attempts. Visit: https://www.hdfcbank.com/", "done"
-            return "❌ Invalid date format. Use DD-MM-YYYY.", "dob"
+                return ("Dear User, You have entered the wrong date of birth number. "
+    'Please feel free to visit our website for credit card related services: '
+    '<a href="https://www.hdfcbank.com/" target="_blank">https://www.hdfcbank.com/</a>',
+    "done")
+            return "Dear User, You have provided Date of Birth in invalid format. Please provide your DOB in DD-MM-YYYY format.", "dob"
         try:
             dob_obj = datetime.datetime.strptime(user_input, "%d-%m-%Y")
             if dob_obj.date() > datetime.date.today():
-                return "❌ Date of birth cannot be in the future.", "dob"
+                return "Date of birth cannot be in the future.", "dob"
         except:
-            return "❌ Invalid date. Please re-enter in DD-MM-YYYY format.", "dob"
+            return "Invalid date. Please re-enter in DD-MM-YYYY format.", "dob"
         state["data"]["dob"] = user_input
         pan = state["data"]["pan"]
         dob = user_input
         res = requests.get(f"https://hdfcbankusecase.onrender.com/profile?pan={pan}&dob={dob}")
         if res.status_code == 404:
             reset_flow()
-            return "❌ KYC not verified. Visit NPCI: https://www.npci.org.in/", "done"
+            return (
+    'Dear User, We are unable to fetch your KYC details with your PAN Number and DOB. '
+    'Please check your KYC status on NPCI: <a href="https://www.npci.org.in/" target="_blank">https://www.npci.org.in/</a> '
+    'or feel free to visit the HDFC website: <a href="https://www.hdfcbank.com/" target="_blank">https://www.hdfcbank.com/</a>',
+    "done")
         kyc_data = res.json()
         if isinstance(kyc_data, list) and kyc_data:
             profile = kyc_data[0]
         else:
             reset_flow()
-            return "⚠️ KYC format not recognized. Visit NPCI: https://www.npci.org.in/", "done"
-
+            return (
+    'Dear User, We are unable to fetch your KYC details with your PAN Number and DOB. '
+    'Please check your KYC status on NPCI: <a href="https://www.npci.org.in/" target="_blank">https://www.npci.org.in/</a> '
+    'or feel free to visit the HDFC website: <a href="https://www.hdfcbank.com/" target="_blank">https://www.hdfcbank.com/</a>',
+    "done"
+)
         state["data"]["kyc"] = profile
         state["step"] = "confirm"
         return f"""Here are your details:<br><br>
@@ -96,7 +113,10 @@ Please confirm if these details are correct (Yes/No).
             return "Great! Please select your employment type:", "employment"
         else:
             reset_flow()
-            return "❌ Redirecting to HDFC website: https://www.hdfcbank.com/", "done"
+            return ("Dear User, We are unable to find the data."
+    'Please feel free to visit our website for credit card related services: '
+    '<a href="https://www.hdfcbank.com/" target="_blank">https://www.hdfcbank.com/</a>',
+    "done")
 
     elif state["step"] == "employment":
         emp = user_input.lower()
