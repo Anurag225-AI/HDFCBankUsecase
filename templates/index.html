@@ -77,13 +77,13 @@
             <span class="chat-time">{{ msg.time }}</span>
             {% if loop.last and msg.step == 'confirm' %}
               <div class="chat-buttons">
-                <button onclick="sendGuidedResponse('Yes')">✅ Yes</button>
-                <button onclick="sendGuidedResponse('No')">❌ No</button>
+                <button onclick="sendGuidedResponse('Yes')">Yes</button>
+                <button onclick="sendGuidedResponse('No')">No</button>
               </div>
             {% elif loop.last and msg.step == 'employment' %}
               <div class="chat-buttons">
-                <button onclick="sendGuidedResponse('Salaried')">👔 Salaried</button>
-                <button onclick="sendGuidedResponse('Self-Employed')">🏢 Self-Employed</button>
+                <button onclick="sendGuidedResponse('Salaried')">Salaried</button>
+                <button onclick="sendGuidedResponse('Self-Employed')">Self-Employed</button>
               </div>
             {% endif %}
           </div>
@@ -104,14 +104,21 @@
       const launcher = document.getElementById("bot-launcher");
       const isOpen = chatBox.classList.toggle("open");
       launcher.style.display = isOpen ? "none" : "flex";
+      if (isOpen) scrollToBottom();
     }
 
     {% if open_chat %}
       window.addEventListener("DOMContentLoaded", function () {
         document.getElementById("chat-box").classList.add("open");
         document.getElementById("bot-launcher").style.display = "none";
+        scrollToBottom();
       });
     {% endif %}
+
+    function scrollToBottom() {
+      const messages = document.getElementById("chat-messages");
+      messages.scrollTop = messages.scrollHeight;
+    }
 
     const hours = new Date().getHours();
     const greeting = hours < 12 ? "Good morning" : hours < 17 ? "Good afternoon" : "Good evening";
@@ -123,7 +130,7 @@
       <p>👋 Hi ${greeting}, I'm EVA, your HDFC virtual assistant. Ask me anything about credit cards!</p>
       <div class="chat-buttons">
         <button onclick="sendGuidedResponse('I want to check my eligibility for Credit card')">✅ I want to check my eligibility for Credit card</button>
-        <button onclick="sendGuidedResponse('I want to know more about Credit card and HDFC services')">📘 I want to know more about Credit card and HDFC services</button>
+        <button onclick="sendGuidedResponse('I want to know more about Credit card and HDFC services')">💳 I want to know more about Credit card and HDFC services</button>
       </div>
       <span class="chat-time">${timeNow}</span>
     `;
@@ -132,12 +139,14 @@
       const input = document.getElementById("chat-input-box");
       input.value = text;
       input.form.submit();
+      scrollToBottom();
     }
 
     function handleSubmit(event) {
       const input = document.getElementById("chat-input-box");
       if (!input.value.trim()) return false;
       return true;
+      scrollToBottom();
     }
 
     // Handle DOB
@@ -159,17 +168,17 @@
 
     // Reset Chat
     function resetChat() {
-      fetch("/", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ user_query: "__reset__" })
-      }).then(() => location.reload());
-    }
-
-    // Scroll to bottom
-    const scrollDiv = document.getElementById("chat-messages");
-    const scrollToBottom = () => scrollDiv.scrollTop = scrollDiv.scrollHeight;
-    scrollToBottom();
+    fetch("/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: new URLSearchParams({ user_query: "__reset__" })
+    }).then(() => {
+      // reload with reset param
+      window.location.href = "/?reset=true";
+    });
+  }
   </script>
 </body>
 </html>

@@ -38,7 +38,7 @@ def process_credit_flow(user_input: str):
     '<a href="https://www.hdfcbank.com/" target="_blank">https://www.hdfcbank.com/</a>',
     "done")
         state["step"] = "pan"
-        return "✅ Phone verified. Now, please enter your PAN number (e.g., ABCDE1234F).", "pan"
+        return "Phone verified. Now, please enter your PAN number (e.g., ABCDE1234F).", "pan"
 
     elif state["step"] == "pan":
         if not re.match(r'^[A-Z]{5}[0-9]{4}[A-Z]$', user_input):
